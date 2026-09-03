@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="InvoicePro" />
+  <meta name="description" content="Invoice Generator untuk Perniagaan Membaiki & Menjual Komputer" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f172a'/%3E%3Ctext x='50' y='68' font-size='60' text-anchor='middle' fill='%2338bdf8'%3E💻%3C/text%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f172a'/%3E%3Ctext x='50' y='68' font-size='60' text-anchor='middle' fill='%2338bdf8'%3E💻%3C/text%3E%3C/svg%3E" />
+  <title>InvoicePro - Computer Repair & Sales</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50:  '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              900: '#0c4a6e',
+            },
+            slate: {
+              950: '#020617',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    * { -webkit-tap-highlight-color: transparent; }
+    html, body { font-family: 'Inter', system-ui, sans-serif; overscroll-behavior: none; }
+    body { background: #f1f5f9; padding-bottom: 5.5rem; }
+
+    /* Hide number input spinners */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+
+    /* Smooth transitions */
+    .transition-all { transition: all 0.2s ease; }
+
+    /* Modal backdrop */
+    .modal-backdrop {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+    /* Bottom safe area for iOS */
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+    }
+
+    /* Animation for items */
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slide-up { animation: slideUp 0.25s ease-out; }
+
+    /* Toast */
+    .toast {
+      position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
+      z-index: 9999; padding: 0.75rem 1.5rem; border-radius: 0.5rem;
+      background: #0f172a; color: white; font-weight: 500;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      animation: toastIn 0.3s ease-out;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translate(-50%, -20px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    /* PDF Template Styles */
+    #pdf-template {
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: 210mm;
+      background: white;
+      color: #0f172a;
+      font-family: 'Inter', sans-serif;
+    }
+    #pdf-template .pdf-wrap {
+      padding: 15mm;
+      box-sizing: border-box;
+      min-height: 297mm;
+    }
+    #pdf-template table { width: 100%; border-collapse: collapse; }
+    #pdf-template th, #pdf-template td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 11px;
+    }
+    #pdf-template th {
+      background: #0f172a;
+      color: white;
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    #pdf-template .text-right { text-align: right; }
+    #pdf-template .text-center { text-align: center; }
+  </style>
+</head>
+
+<body class="text-slate-800">
+
+  <!-- ============ HEADER ============ -->
+  <header class="sticky top-0 z-40 bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg">
+    <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-xl shadow-md flex-shrink-0">
+          💻
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-base font-bold truncate leading-tight">InvoicePro</h1>
+          <p class="text-[10px] text-slate-300 truncate">Computer Repair & Sales</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="installBtn" class="hidden px-3 py-1.5 text-xs font-semibold bg-brand-500 hover:bg-brand-600 rounded-lg transition-all">
+          📲 Install
+        </button>
+        <button id="historyBtn" class="p-2 rounded-lg hover:bg-slate-700 transition-all" title="Sejarah Invoice">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </button>
+        <button id="settingsBtn" class="p-2 rounded-lg hover:bg-slate-700 transition-all" title="Tetapan Syarikat">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ MAIN CONTENT ============ -->
+  <main class="max-w-3xl mx-auto px-4 py-4 space-y-4">
+
+    <!-- Invoice Meta -->
+    <section class="bg-white rounded-2xl shadow-sm p-4 border border-slate-200">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Maklumat Invoice</h2>
+        <span class="text-[10px] bg-brand-100 text-brand-700 px-2 py-1 rounded-full font-semibold">Auto-Generate</span>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs text-slate-500 font-medium">No. Invoice</label>
+          <input id="invoiceNo" type="text" readonly class="w-full mt-1 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold text-slate-900" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-500 font-medium">Tarikh Invoice</label>
+          <input id="invoiceDate" type="date" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-500 font-medium">Tarikh Due</label>
+          <input id="dueDate" type="date" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-500 font-medium">Status</label>
+          <select id="status" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm">
+            <option value="Unpaid">Belum Bayar</option>
+            <option value="Paid">Sudah Bayar</option>
+            <option value="Pending">Menunggu</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Customer Info -->
+    <section class="bg-white rounded-2xl shadow-sm p-4 border border-slate-200">
+      <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3">Maklumat Pelanggan</h2>
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs text-slate-500 font-medium">Nama Pelanggan *</label>
+          <input id="customerName" type="text" placeholder="cth: Ahmad bin Ali" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-500 font-medium">No. Telefon</label>
+          <input id="customerPhone" type="tel" inputmode="tel" placeholder="012-3456789" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-500 font-medium">Alamat (Pilihan)</label>
+          <textarea id="customerAddress" rows="2" placeholder="Alamat penuh pelanggan" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm resize-none"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- Device Info -->
+    <section class="bg-gradient-to-br from-brand-50 to-white rounded-2xl shadow-sm p-4 border border-brand-100">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-lg">🖥️</span>
+        <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Maklumat Peranti</h2>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs text-slate-500 font-medium">Jenis / Model Peranti *</label>
+          <input id="deviceModel" type="text" placeholder="cth: Asus ROG GL503 / Desktop Custom" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-slate-500 font-medium">No. Serial</label>
+            <input id="deviceSerial" type="text" placeholder="SN-12345" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-mono" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 font-medium">RMA / Ref No.</label>
+            <input id="deviceRma" type="text" placeholder="RMA-001" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-mono" />
+          </div>
+        </div>
+        <div>
+          <label class="text-xs text-slate-500 font-medium">Aduan / Nota Masalah</label>
+          <textarea id="deviceIssue" rows="2" placeholder="cth: Laptop panas, lambat boot, perlu format" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm resize-none"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- Line Items -->
+    <section class="bg-white rounded-2xl shadow-sm p-4 border border-slate-200">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Item & Perkhidmatan</h2>
+        <button id="addItemBtn" class="px-3 py-1.5 text-xs font-bold bg-brand-500 text-white rounded-lg shadow hover:bg-brand-600 transition-all flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+          Tambah
+        </button>
+      </div>
+
+      <!-- Preset Quick-Add -->
+      <div class="mb-3">
+        <p class="text-[11px] text-slate-500 font-medium mb-2">⚡ Quick Add (Tekan untuk tambah):</p>
+        <div id="presetList" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- Items Container -->
+      <div id="itemsContainer" class="space-y-3"></div>
+    </section>
+
+    <!-- Summary -->
+    <section class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl shadow-lg p-4">
+      <h2 class="text-sm font-bold uppercase tracking-wide mb-3 text-slate-300">Ringkasan Bayaran</h2>
+      <div class="space-y-2 text-sm">
+        <div class="flex justify-between">
+          <span class="text-slate-300">Subtotal</span>
+          <span id="subtotalDisplay" class="font-mono font-semibold">RM 0.00</span>
+        </div>
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-slate-300">Diskaun</span>
+            <input id="discountValue" type="number" inputmode="decimal" value="0" min="0" step="0.01" class="w-20 px-2 py-1 bg-slate-700 border border-slate-600 rounded text-xs text-right font-mono" />
+            <select id="discountType" class="px-2 py-1 bg-slate-700 border border-slate-600 rounded text-xs">
+              <option value="amount">RM</option>
+              <option value="percent">%</option>
+            </select>
+          </div>
+          <span id="discountDisplay" class="font-mono text-red-300">- RM 0.00</span>
+        </div>
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <label class="flex items-center gap-1.5 text-slate-300 cursor-pointer">
+              <input id="taxEnabled" type="checkbox" class="w-4 h-4 accent-brand-500" />
+              <span>SST (6%)</span>
+            </label>
+          </div>
+          <span id="taxDisplay" class="font-mono text-slate-300">RM 0.00</span>
+        </div>
+        <div class="border-t border-slate-700 my-2"></div>
+        <div class="flex justify-between items-baseline">
+          <span class="text-slate-300 font-semibold">JUMLAH BESAR</span>
+          <span id="grandTotalDisplay" class="text-2xl font-extrabold font-mono text-brand-500">RM 0.00</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ BOTTOM ACTION BAR ============ -->
+  <div class="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 shadow-2xl safe-bottom">
+    <div class="max-w-3xl mx-auto px-3 py-3 grid grid-cols-3 gap-2">
+      <button id="resetBtn" class="py-3 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 transition-all flex items-center justify-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Reset
+      </button>
+      <button id="saveBtn" class="py-3 rounded-xl bg-slate-800 text-white font-semibold text-sm hover:bg-slate-900 transition-all flex items-center justify-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+        Simpan
+      </button>
+      <button id="pdfBtn" class="py-3 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 text-white font-bold text-sm shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS MODAL ============ -->
+  <div id="settingsModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl max-h-[90vh] overflow-y-auto animate-slide-up">
+      <div class="sticky top-0 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+        <h3 class="font-bold text-slate-900">Tetapan Profil Syarikat</h3>
+        <button data-close-modal="settingsModal" class="p-2 rounded-lg hover:bg-slate-100">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="p-4 space-y-4">
+        <!-- Logo Upload -->
+        <div>
+          <label class="text-xs font-semibold text-slate-600">Logo Syarikat</label>
+          <div class="mt-2 flex items-center gap-3">
+            <div id="logoPreview" class="w-16 h-16 rounded-xl bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden">
+              <span class="text-slate-400 text-xs">Tiada</span>
+            </div>
+            <div class="flex-1 space-y-2">
+              <label class="block px-3 py-2 bg-brand-500 text-white text-xs font-semibold rounded-lg text-center cursor-pointer">
+                📷 Muat Naik Logo
+                <input id="logoInput" type="file" accept="image/*" class="hidden" />
+              </label>
+              <button id="removeLogoBtn" class="block w-full px-3 py-1.5 bg-slate-100 text-slate-600 text-xs font-semibold rounded-lg">Padam Logo</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-slate-600">Nama Syarikat *</label>
+          <input id="companyName" type="text" placeholder="cth: TechFix Enterprise" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm" />
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-600">No. Pendaftaran SSM</label>
+          <input id="companySSM" type="text" placeholder="202401012345 (123456-A)" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-mono" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-slate-600">No. Telefon</label>
+            <input id="companyPhone" type="tel" placeholder="03-12345678" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-600">Emel</label>
+            <input id="companyEmail" type="email" placeholder="info@techfix.com" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm" />
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-600">Alamat</label>
+          <textarea id="companyAddress" rows="2" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm resize-none"></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200">
+          <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wide mb-3">🏦 Maklumat Bank</h4>
+          <div class="space-y-3">
+            <div>
+              <label class="text-xs font-semibold text-slate-600">Nama Bank</label>
+              <input id="bankName" type="text" placeholder="Maybank / CIMB / Public Bank" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs font-semibold text-slate-600">No. Akaun</label>
+                <input id="bankAccount" type="text" placeholder="1234567890" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-mono" />
+              </div>
+              <div>
+                <label class="text-xs font-semibold text-slate-600">Nama Pemegang</label>
+                <input id="bankHolder" type="text" placeholder="TechFix Enterprise" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button id="saveSettingsBtn" class="w-full py-3 bg-gradient-to-r from-brand-500 to-brand-600 text-white font-bold rounded-xl shadow-lg">
+          💾 Simpan Tetapan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HISTORY MODAL ============ -->
+  <div id="historyModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-2xl sm:rounded-2xl rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col animate-slide-up">
+      <div class="sticky top-0 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+        <h3 class="font-bold text-slate-900">📋 Sejarah Invoice</h3>
+        <button data-close-modal="historyModal" class="p-2 rounded-lg hover:bg-slate-100">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="historyList" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- ============ PDF TEMPLATE (Hidden) ============ -->
+  <div id="pdf-template">
+    <div class="pdf-wrap" id="pdfContent"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
