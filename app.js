@@ -413,9 +413,9 @@ function buildPDFContent(data) {
   ].filter(Boolean).join('');
 
   const bankHtml = (c.bankName || c.bankAccount || c.bankHolder) ? `
-    <div style="background:#f1f5f9;border-left:4px solid #0ea5e9;padding:12px 16px;margin:16px 0;border-radius:4px;">
-      <div style="font-size:10px;text-transform:uppercase;color:#64748b;font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">Maklumat Pembayaran</div>
-      <div style="font-size:12px;line-height:1.6;">
+    <div style="background:#f6f6f6;border:1px solid #d1d5db;border-left:4px solid #666;padding:12px 16px;margin:16px 0;border-radius:4px;">
+      <div style="font-size:10px;text-transform:uppercase;color:#4b5563;font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">Maklumat Pembayaran</div>
+      <div style="font-size:12px;line-height:1.6;color:#1f2937;">
         ${c.bankName ? `<div><strong>Bank:</strong> ${escapeHtml(c.bankName)}</div>` : ''}
         ${c.bankAccount ? `<div><strong>No. Akaun:</strong> ${escapeHtml(c.bankAccount)}</div>` : ''}
         ${c.bankHolder ? `<div><strong>Nama Pemegang:</strong> ${escapeHtml(c.bankHolder)}</div>` : ''}
@@ -486,11 +486,11 @@ function buildPDFContent(data) {
         <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:11px;color:#475569;">
           <span>Subtotal</span><span style="font-family:monospace;white-space:nowrap;">${formatCurrency(data.subtotal)}</span>
         </div>
-        ${data.discount > 0 ? `<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:11px;color:#dc2626;"><span>Diskaun</span><span style="font-family:monospace;white-space:nowrap;">- ${formatCurrency(data.discount)}</span></div>` : ''}
+        ${data.discount > 0 ? `<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:11px;color:#444;"><span>Diskaun</span><span style="font-family:monospace;white-space:nowrap;">- ${formatCurrency(data.discount)}</span></div>` : ''}
         ${data.tax > 0 ? `<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:11px;color:#475569;"><span>SST (6%)</span><span style="font-family:monospace;white-space:nowrap;">${formatCurrency(data.tax)}</span></div>` : ''}
-        <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;margin-top:6px;background:#0f172a;color:white;border-radius:4px;">
-          <span style="font-weight:700;font-size:12px;">JUMLAH BESAR</span>
-          <span style="font-family:monospace;font-weight:800;font-size:14px;color:#38bdf8;white-space:nowrap;">${formatCurrency(data.grandTotal)}</span>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;margin-top:6px;background:#626262;color:#fff;border:1px solid #4b4b4b;border-radius:4px;">
+          <span style="font-weight:700;font-size:12px;color:#fff;">JUMLAH BESAR</span>
+          <span style="font-family:monospace;font-weight:800;font-size:14px;color:#fff;white-space:nowrap;">${formatCurrency(data.grandTotal)}</span>
         </div>
       </div>
     </div>
@@ -508,14 +508,26 @@ function buildPDFContent(data) {
       </ol>
     </div>
 
-    <div style="margin-top:30px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:30px;">
-      <div><div style="border-top:1.5px solid #0f172a;padding-top:6px;font-size:10px;color:#475569;">Tandatangan Pelanggan<br/><span style="font-size:9px;overflow-wrap:anywhere;">Nama: ${escapeHtml(data.customerName || '________________')}</span></div></div>
-      <div><div style="border-top:1.5px solid #0f172a;padding-top:6px;font-size:10px;color:#475569;text-align:right;">Tandatangan & Cop Syarikat<br/><span style="font-size:9px;overflow-wrap:anywhere;">${escapeHtml(c.name || 'TechFix Enterprise')}</span></div></div>
+    <div style="margin-top:42px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:36px;">
+      <div style="min-width:0;">
+        <div style="border-top:1.5px solid #0f172a;padding-top:7px;font-size:10px;color:#475569;">
+          <div>Tandatangan Pelanggan</div>
+          <div style="font-size:9px;margin-top:6px;overflow-wrap:anywhere;color:#1f2937;">Nama: ${escapeHtml(data.customerName || '________________')}</div>
+          <div style="font-size:9px;margin-top:15px;color:#1f2937;">Tarikh: <span style="display:inline-block;width:145px;border-bottom:1px solid #6b7280;vertical-align:middle;margin-left:5px;">&nbsp;</span></div>
+        </div>
+      </div>
+      <div style="min-width:0;">
+        <div style="border-top:1.5px solid #0f172a;padding-top:7px;font-size:10px;color:#475569;text-align:right;">
+          <div>Tandatangan &amp; Cop Syarikat</div>
+          <div style="font-size:9px;margin-top:6px;overflow-wrap:anywhere;color:#1f2937;">${escapeHtml(c.name || 'TechFix Enterprise')}</div>
+          <div style="font-size:9px;margin-top:15px;color:#1f2937;">Tarikh: <span style="display:inline-block;width:145px;border-bottom:1px solid #6b7280;vertical-align:middle;margin-left:5px;">&nbsp;</span></div>
+        </div>
+      </div>
     </div>
 
-    <div style="margin-top:30px;text-align:center;padding-top:16px;border-top:1px solid #e2e8f0;">
-      <div style="font-size:11px;color:#0ea5e9;font-weight:600;">Terima kasih atas sokongan anda! 🙏</div>
-      <div style="font-size:9px;color:#94a3b8;margin-top:4px;">Invoice ini dijana secara elektronik oleh InvoicePro</div>
+    <div style="margin-top:30px;text-align:center;padding-top:14px;">
+      <div style="font-size:11px;color:#374151;font-weight:700;">Terima kasih atas sokongan anda! 🙏</div>
+      <div style="font-size:9px;color:#9ca3af;margin-top:4px;">Invoice ini dijana secara elektronik oleh MyInvois</div>
     </div>
   `;
 
@@ -541,7 +553,6 @@ function generatePDF(invoiceNo) {
     overflow: element.style.overflow,
   };
 
-  // Use a safe printable width smaller than A4 to prevent mobile/html2canvas rounding from clipping the right edge.
   element.style.width = '185mm';
   element.style.maxWidth = '185mm';
   element.style.padding = '0';
