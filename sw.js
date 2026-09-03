@@ -1,4 +1,4 @@
-const CACHE_NAME = 'myinvois-v2';
+const CACHE_NAME = 'myinvois-v3';
 const APP_SHELL = ['./', './index.html', './app.js', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', event => {
