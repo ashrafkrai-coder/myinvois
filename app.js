@@ -97,7 +97,6 @@ function generateInvoiceNo() {
 }
 
 function newInvoice() {
-  // Generate new invoice number
   document.getElementById('invoiceNo').value = generateInvoiceNo();
   document.getElementById('invoiceDate').value = formatDate(new Date());
   const due = new Date();
@@ -217,7 +216,6 @@ function recalc() {
 
 // ============ EVENT BINDING ============
 function bindEvents() {
-  // Add item
   document.getElementById('addItemBtn').addEventListener('click', () => {
     state.items.push({ id: Date.now() + Math.random(), name: '', qty: 1, price: 0 });
     renderItems();
@@ -225,7 +223,6 @@ function bindEvents() {
     saveDraft();
   });
 
-  // Item field changes (event delegation)
   document.getElementById('itemsContainer').addEventListener('input', (e) => {
     const field = e.target.dataset.itemField;
     const id = e.target.dataset.itemId;
@@ -234,8 +231,6 @@ function bindEvents() {
     if (!item) return;
     if (field === 'name') item.name = e.target.value;
     else item[field] = Number(e.target.value) || 0;
-
-    // Update inline total display without full re-render
     const row = e.target.closest('[data-item-id]');
     if (row) {
       const totalEl = row.querySelector('.grid > div:last-child > div');
@@ -245,7 +240,6 @@ function bindEvents() {
     saveDraft();
   });
 
-  // Remove item
   document.getElementById('itemsContainer').addEventListener('click', (e) => {
     const btn = e.target.closest('[data-remove-item]');
     if (!btn) return;
@@ -256,24 +250,19 @@ function bindEvents() {
     saveDraft();
   });
 
-  // Discount / tax
   document.getElementById('discountValue').addEventListener('input', () => { recalc(); saveDraft(); });
   document.getElementById('discountType').addEventListener('change', () => { recalc(); saveDraft(); });
   document.getElementById('taxEnabled').addEventListener('change', () => { recalc(); saveDraft(); });
 
-  // All form fields -> save draft
   ['invoiceDate', 'dueDate', 'status', 'customerName', 'customerPhone', 'customerAddress',
    'deviceModel', 'deviceSerial', 'deviceRma', 'deviceIssue'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', saveDraft);
   });
 
-  // Action buttons
   document.getElementById('resetBtn').addEventListener('click', handleReset);
   document.getElementById('saveBtn').addEventListener('click', handleSave);
   document.getElementById('pdfBtn').addEventListener('click', handlePDF);
-
-  // Modals
   document.getElementById('settingsBtn').addEventListener('click', () => openSettingsModal());
   document.getElementById('historyBtn').addEventListener('click', () => openHistoryModal());
   document.getElementById('saveSettingsBtn').addEventListener('click', handleSaveSettings);
@@ -285,14 +274,12 @@ function bindEvents() {
   });
   document.getElementById('logoInput').addEventListener('change', handleLogoUpload);
 
-  // Close modal buttons
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
     btn.addEventListener('click', () => {
       document.getElementById(btn.dataset.closeModal).classList.add('hidden');
     });
   });
 
-  // Click backdrop to close
   [document.getElementById('settingsModal'), document.getElementById('historyModal')].forEach(modal => {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) modal.classList.add('hidden');
@@ -348,7 +335,6 @@ function collectFormData() {
 function handleReset() {
   if (!confirm('Reset borang ini? Data semasa akan hilang (kecuali tetapan syarikat).')) return;
   localStorage.removeItem(STORAGE_KEYS.DRAFT);
-  // Reset fields
   ['customerName', 'customerPhone', 'customerAddress', 'deviceModel', 'deviceSerial', 'deviceRma', 'deviceIssue'].forEach(id => {
     document.getElementById(id).value = '';
   });
@@ -379,12 +365,9 @@ function handleSave() {
     grandTotal: calc.grandTotal,
     savedAt: new Date().toISOString(),
   };
-
-  // Update if exists, else add
   const idx = state.invoices.findIndex(i => i.invoiceNo === invoice.invoiceNo);
   if (idx >= 0) state.invoices[idx] = invoice;
   else state.invoices.unshift(invoice);
-
   storage.set(STORAGE_KEYS.INVOICES, state.invoices);
   localStorage.removeItem(STORAGE_KEYS.DRAFT);
   showToast(`💾 Invoice ${invoice.invoiceNo} disimpan!`);
@@ -444,36 +427,34 @@ function buildPDFContent(data) {
   const statusText = data.status === 'Paid' ? 'SUDAH BAYAR' : data.status === 'Pending' ? 'MENUNGGU' : 'BELUM BAYAR';
 
   const html = `
-    <!-- Company Header -->
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:3px solid #0f172a;">
-      <div style="flex:1;">
+      <div style="flex:1;min-width:0;padding-right:16px;">
         ${logoHtml}
         <div style="margin-top:10px;">
           <div style="font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-0.5px;">${escapeHtml(c.name || 'TechFix Enterprise')}</div>
           ${c.ssm ? `<div style="font-size:10px;color:#64748b;margin-top:2px;">SSM: ${escapeHtml(c.ssm)}</div>` : ''}
-          ${c.address ? `<div style="font-size:10px;color:#475569;margin-top:4px;line-height:1.4;max-width:300px;">${escapeHtml(c.address)}</div>` : ''}
-          <div style="font-size:10px;color:#475569;margin-top:2px;">
+          ${c.address ? `<div style="font-size:10px;color:#475569;margin-top:4px;line-height:1.4;max-width:300px;overflow-wrap:anywhere;">${escapeHtml(c.address)}</div>` : ''}
+          <div style="font-size:10px;color:#475569;margin-top:2px;overflow-wrap:anywhere;">
             ${c.phone ? `📞 ${escapeHtml(c.phone)}` : ''}
             ${c.email ? ` &nbsp;|&nbsp; ✉️ ${escapeHtml(c.email)}` : ''}
           </div>
         </div>
       </div>
-      <div style="text-align:right;">
+      <div style="text-align:right;flex:0 0 180px;max-width:180px;">
         <div style="font-size:28px;font-weight:800;color:#0f172a;letter-spacing:-1px;line-height:1;">INVOICE</div>
-        <div style="font-size:11px;font-weight:600;color:#0ea5e9;margin-top:4px;font-family:monospace;">${escapeHtml(data.invoiceNo)}</div>
+        <div style="font-size:11px;font-weight:600;color:#0ea5e9;margin-top:4px;font-family:monospace;overflow-wrap:anywhere;">${escapeHtml(data.invoiceNo)}</div>
         <div style="display:inline-block;margin-top:8px;padding:3px 10px;background:${statusColor};color:white;font-size:9px;font-weight:700;border-radius:3px;letter-spacing:0.5px;">${statusText}</div>
       </div>
     </div>
 
-    <!-- Invoice & Customer Details -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;">
-      <div>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;margin-bottom:16px;">
+      <div style="min-width:0;">
         <div style="font-size:10px;text-transform:uppercase;color:#64748b;font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">Dibilkan Kepada</div>
-        <div style="font-size:13px;font-weight:700;color:#0f172a;">${escapeHtml(data.customerName || '-')}</div>
-        ${data.customerPhone ? `<div style="font-size:11px;color:#475569;margin-top:2px;">📞 ${escapeHtml(data.customerPhone)}</div>` : ''}
-        ${data.customerAddress ? `<div style="font-size:11px;color:#475569;margin-top:2px;line-height:1.4;">${escapeHtml(data.customerAddress)}</div>` : ''}
+        <div style="font-size:13px;font-weight:700;color:#0f172a;overflow-wrap:anywhere;">${escapeHtml(data.customerName || '-')}</div>
+        ${data.customerPhone ? `<div style="font-size:11px;color:#475569;margin-top:2px;overflow-wrap:anywhere;">📞 ${escapeHtml(data.customerPhone)}</div>` : ''}
+        ${data.customerAddress ? `<div style="font-size:11px;color:#475569;margin-top:2px;line-height:1.4;overflow-wrap:anywhere;">${escapeHtml(data.customerAddress)}</div>` : ''}
       </div>
-      <div style="text-align:right;">
+      <div style="text-align:right;min-width:0;">
         <div style="font-size:10px;text-transform:uppercase;color:#64748b;font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">Tarikh</div>
         <div style="font-size:11px;color:#0f172a;"><strong>Tarikh Invoice:</strong> ${formatDisplayDate(data.invoiceDate)}</div>
         <div style="font-size:11px;color:#0f172a;"><strong>Tarikh Due:</strong> ${formatDisplayDate(data.dueDate)}</div>
@@ -481,55 +462,41 @@ function buildPDFContent(data) {
     </div>
 
     ${deviceInfo ? `
-    <div style="background:#eff6ff;border:1px solid #bfdbfe;padding:10px 14px;margin-bottom:16px;border-radius:6px;">
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;padding:10px 14px;margin-bottom:16px;border-radius:6px;overflow-wrap:anywhere;">
       <div style="font-size:10px;text-transform:uppercase;color:#1e40af;font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">🖥️ Maklumat Peranti</div>
       <div style="font-size:11px;color:#1e3a8a;line-height:1.6;">${deviceInfo}</div>
     </div>
     ` : ''}
 
-    <!-- Items Table -->
-    <table style="margin-bottom:8px;">
+    <table style="margin-bottom:8px;table-layout:fixed;width:100%;">
       <thead>
         <tr>
-          <th style="width:30px;">Bil</th>
-          <th>Keterangan Item / Perkhidmatan</th>
-          <th style="width:50px;" class="text-center">Kty</th>
-          <th style="width:90px;" class="text-right">Harga (RM)</th>
-          <th style="width:100px;" class="text-right">Jumlah (RM)</th>
+          <th style="width:6%;">Bil</th>
+          <th style="width:44%;">Keterangan Item / Perkhidmatan</th>
+          <th style="width:10%;" class="text-center">Kty</th>
+          <th style="width:19%;" class="text-right">Harga (RM)</th>
+          <th style="width:21%;" class="text-right">Jumlah (RM)</th>
         </tr>
       </thead>
-      <tbody>
-        ${itemsHtml}
-      </tbody>
+      <tbody>${itemsHtml}</tbody>
     </table>
 
-    <!-- Totals -->
     <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
-      <div style="width:260px;">
-        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:11px;color:#475569;">
-          <span>Subtotal</span>
-          <span style="font-family:monospace;">${formatCurrency(data.subtotal)}</span>
+      <div style="width:250px;max-width:48%;">
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:11px;color:#475569;">
+          <span>Subtotal</span><span style="font-family:monospace;white-space:nowrap;">${formatCurrency(data.subtotal)}</span>
         </div>
-        ${data.discount > 0 ? `
-        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:11px;color:#dc2626;">
-          <span>Diskaun</span>
-          <span style="font-family:monospace;">- ${formatCurrency(data.discount)}</span>
-        </div>` : ''}
-        ${data.tax > 0 ? `
-        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:11px;color:#475569;">
-          <span>SST (6%)</span>
-          <span style="font-family:monospace;">${formatCurrency(data.tax)}</span>
-        </div>` : ''}
-        <div style="display:flex;justify-content:space-between;padding:10px 12px;margin-top:6px;background:#0f172a;color:white;border-radius:4px;">
+        ${data.discount > 0 ? `<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:11px;color:#dc2626;"><span>Diskaun</span><span style="font-family:monospace;white-space:nowrap;">- ${formatCurrency(data.discount)}</span></div>` : ''}
+        ${data.tax > 0 ? `<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:11px;color:#475569;"><span>SST (6%)</span><span style="font-family:monospace;white-space:nowrap;">${formatCurrency(data.tax)}</span></div>` : ''}
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;margin-top:6px;background:#0f172a;color:white;border-radius:4px;">
           <span style="font-weight:700;font-size:12px;">JUMLAH BESAR</span>
-          <span style="font-family:monospace;font-weight:800;font-size:14px;color:#38bdf8;">${formatCurrency(data.grandTotal)}</span>
+          <span style="font-family:monospace;font-weight:800;font-size:14px;color:#38bdf8;white-space:nowrap;">${formatCurrency(data.grandTotal)}</span>
         </div>
       </div>
     </div>
 
     ${bankHtml}
 
-    <!-- Terms -->
     <div style="margin-top:20px;padding:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;">
       <div style="font-size:10px;text-transform:uppercase;color:#475569;font-weight:700;letter-spacing:0.5px;margin-bottom:8px;">Syarat & Terma</div>
       <ol style="font-size:10px;color:#334155;line-height:1.7;padding-left:16px;margin:0;">
@@ -541,20 +508,9 @@ function buildPDFContent(data) {
       </ol>
     </div>
 
-    <!-- Signature & Footer -->
-    <div style="margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:30px;">
-      <div>
-        <div style="border-top:1.5px solid #0f172a;padding-top:6px;font-size:10px;color:#475569;">
-          Tandatangan Pelanggan<br/>
-          <span style="font-size:9px;">Nama: ${escapeHtml(data.customerName || '________________')}</span>
-        </div>
-      </div>
-      <div>
-        <div style="border-top:1.5px solid #0f172a;padding-top:6px;font-size:10px;color:#475569;text-align:right;">
-          Tandatangan & Cop Syarikat<br/>
-          <span style="font-size:9px;">${escapeHtml(c.name || 'TechFix Enterprise')}</span>
-        </div>
-      </div>
+    <div style="margin-top:30px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:30px;">
+      <div><div style="border-top:1.5px solid #0f172a;padding-top:6px;font-size:10px;color:#475569;">Tandatangan Pelanggan<br/><span style="font-size:9px;overflow-wrap:anywhere;">Nama: ${escapeHtml(data.customerName || '________________')}</span></div></div>
+      <div><div style="border-top:1.5px solid #0f172a;padding-top:6px;font-size:10px;color:#475569;text-align:right;">Tandatangan & Cop Syarikat<br/><span style="font-size:9px;overflow-wrap:anywhere;">${escapeHtml(c.name || 'TechFix Enterprise')}</span></div></div>
     </div>
 
     <div style="margin-top:30px;text-align:center;padding-top:16px;border-top:1px solid #e2e8f0;">
@@ -576,12 +532,40 @@ function formatDisplayDate(dateStr) {
 // ============ PDF GENERATION ============
 function generatePDF(invoiceNo) {
   const element = document.getElementById('pdfContent');
+  const previous = {
+    width: element.style.width,
+    maxWidth: element.style.maxWidth,
+    padding: element.style.padding,
+    margin: element.style.margin,
+    boxSizing: element.style.boxSizing,
+    overflow: element.style.overflow,
+  };
+
+  // Use a safe printable width smaller than A4 to prevent mobile/html2canvas rounding from clipping the right edge.
+  element.style.width = '185mm';
+  element.style.maxWidth = '185mm';
+  element.style.padding = '0';
+  element.style.margin = '0';
+  element.style.boxSizing = 'border-box';
+  element.style.overflow = 'visible';
+
+  const renderWidth = Math.ceil(element.getBoundingClientRect().width);
   const opt = {
-    margin: 0,
+    margin: [10, 10, 10, 10],
     filename: `${invoiceNo}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 3, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      letterRendering: true,
+      backgroundColor: '#ffffff',
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: renderWidth,
+      width: renderWidth,
+    },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
   };
 
   showToast('📄 Sedang menjana PDF...');
@@ -591,6 +575,13 @@ function generatePDF(invoiceNo) {
   }).catch(err => {
     console.error(err);
     showToast('❌ Gagal menjana PDF');
+  }).finally(() => {
+    element.style.width = previous.width;
+    element.style.maxWidth = previous.maxWidth;
+    element.style.padding = previous.padding;
+    element.style.margin = previous.margin;
+    element.style.boxSizing = previous.boxSizing;
+    element.style.overflow = previous.overflow;
   });
 }
 
@@ -627,7 +618,6 @@ function handleLogoUpload(e) {
   }
   const reader = new FileReader();
   reader.onload = (ev) => {
-    // Resize image to save storage
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
@@ -703,7 +693,6 @@ function openHistoryModal() {
   document.getElementById('historyModal').classList.remove('hidden');
 }
 
-// History actions (delegation)
 document.addEventListener('click', (e) => {
   const loadBtn = e.target.closest('[data-load-invoice]');
   if (loadBtn) {
